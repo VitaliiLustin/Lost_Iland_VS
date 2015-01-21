@@ -1,0 +1,349 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<s:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009"
+                       xmlns:s="library://ns.adobe.com/flex/spark"
+                       xmlns:mx="library://ns.adobe.com/flex/mx"  minWidth="850" minHeight="600" width="750" creationComplete="init()">
+						
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	
+	<fx:Script>
+	    <![CDATA[
+	
+		import core.IsoConvert;
+		import flash.display.Bitmap;
+		import flash.display.BitmapData;
+		import flash.display.Loader;
+		import flash.events.MouseEvent;
+		import flash.events.ProgressEvent;
+		import flash.filesystem.File;
+		import flash.filesystem.FileMode;
+		import flash.filesystem.FileStream;
+		import flash.geom.Rectangle;
+		import flash.ui.Keyboard;
+	    import mx.controls.Alert;
+		import mx.events.IndexChangedEvent;
+	    import mx.events.ItemClickEvent;
+		import flash.net.FileReference; 
+		import flash.net.FileReferenceList; 
+		import flash.net.FileFilter; 
+		import flash.events.Event;
+		import flash.net.URLRequest; 
+		import flash.net.URLRequestMethod; 
+		import flash.net.URLVariables; 
+		import flash.utils.ByteArray;
+		import mx.collections.*
+		import mx.events.ListEvent;
+		import mx.events.ResizeEvent;
+		import mx.events.CloseEvent;
+		import flash.events.KeyboardEvent;
+		import flash.display.StageAlign;
+		import flash.display.StageScaleMode;
+		
+        // Event handler function to display the selected button
+        // in an Alert control.
+		public var images:Object;
+		public var map:Map;
+		public var deltaX:int 		= 0;
+		public var deltaY:int 		= 0;
+		public var moveCounter:int 	= 0;
+		public var swfPath:String;
+		public var currentImage:String;
+		
+		[Bindable]
+		[Embed(source="elements/icon/ruin1_1.png")]
+		public var img1:Class;
+		
+		[Bindable]
+		[Embed(source="elements/icon/ruin1_2.png")]
+		public var img2:Class;
+		
+		[Bindable]
+		[Embed(source="elements/icon/ruin1_3.png")]
+		public var img3:Class;
+		
+		[Bindable]
+		public var imageFiles:Array = [
+			{label:"Руины1",  icon:img1,  img:"elements/img/ruin1_1.png"},
+			{label:"Руины2",  icon:img2,  img:"elements/img/ruin1_2.png"},
+			{label:"Руины3",  icon:img3,  img:"elements/img/ruin1_3.png"}
+		];
+		
+		[Bindable]
+		public var zonesNames:Array = [
+			"1",
+			"2",
+			"3",
+			"4"
+		];
+		
+		
+		private function init() : void {
+			
+			//container.clipContent = true;
+			holder.scrollRect = new Rectangle(0, 0, holder.width, holder.height);
+			holder.addEventListener(ResizeEvent.RESIZE, onResizeEvent);
+			holder.addEventListener(MouseEvent.MOUSE_MOVE, onMouseMove);
+			holder.addEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
+			holder.addEventListener(MouseEvent.MOUSE_UP, onMouseUp);
+			holder.addEventListener(KeyboardEvent.KEY_UP, onKeyUp);		
+			holder.addEventListener(KeyboardEvent.KEY_DOWN, onKeyDown);		
+			
+			map = new Map(0, this);
+			map.addEventListener(MouseEvent.MOUSE_DOWN, onMapMouseDown);
+			
+		}
+		
+		public function onMapMouseDown(e:MouseEvent):void {
+			holder.setFocus();
+			holder.drawFocus(true);
+		}
+		
+		public function onKeyUp(e:KeyboardEvent):void {
+			var str:String = "+";
+			if (e.keyCode == Keyboard.UP) {
+				map.changeDepth("+");
+			}else if (e.keyCode == Keyboard.DOWN) {
+				map.changeDepth("-");
+			}else if (e.keyCode == Keyboard.CONTROL) {
+				Zones.clear = false;
+				zonesDraw.text = "";
+			}else if (e.keyCode == Keyboard.SHIFT) {
+				Zones.draw = false;
+				zonesDraw.text = "";
+			}
+		}
+		
+		public function onKeyDown(e:KeyboardEvent):void {
+			if (e.keyCode == Keyboard.CONTROL) {
+				Zones.clear = true;
+				zonesDraw.text = "Стирает";
+			}else if (e.keyCode == Keyboard.SHIFT) {
+				Zones.draw = true;
+				zonesDraw.text = "Рисуем";
+			}
+		}
+		
+		private function onUpBttnClick(event:Event):void {
+			map.changeDepth("+");
+		}
+		private function onDnBttnClick(event:Event):void {
+			map.changeDepth("-");
+		}
+		
+		public function handleClick(event:Event):void
+		{
+			var index:uint = event.currentTarget.selectedIndex;
+			map.addUnit(imageFiles[index]);
+		}
+		
+		private function onResizeEvent(e:ResizeEvent):void 
+		{
+			holder.scrollRect = new Rectangle(0, 0, holder.width, holder.height);
+		}
+		
+		private function unitResize(value:Number):void
+		{
+			if(Map.self.selectedUnit != null)	Map.self.selectedUnit.scale(value);
+		}
+		
+		private function handleChangeX(event:Event):void 
+		{
+			Map.X = int(event.target.data);
+			map.changePlane();
+		}
+		
+		private function handleChangeZ(event:Event):void {
+			Map.Z = int(event.target.data);
+			map.changePlane();
+		}
+		
+		/**
+		 * Событие перемещения мыши
+		 * @param	e	объект события
+		 */
+		private function onMouseMove(e:MouseEvent):void {
+			
+			var point:Object = IsoConvert.screenToIso(map.mouseX, map.mouseY, true);
+			
+			//Map.X = point.x>0?point.x:0;
+			//Map.Z = point.z>0?point.z:0;
+			//Map.X = Map.X < Map.isoCells?Map.X:Map.isoCells - 1;
+			//Map.Z = Map.Z < Map.isoRows?Map.Z:Map.isoRows - 1;
+			
+			moveCounter++;
+			
+			var target:* = e.target;
+				
+			if (e.buttonDown == true && moveCounter>2 && !map.moved) {
+				
+				var dx:int = e.stageX - deltaX;
+				var dy:int = e.stageY - deltaY;
+				
+				deltaX = e.stageX;
+				deltaY = e.stageY;
+				
+				map.redraw(dx, dy);
+			}
+			else 
+			{
+				if(!map.moved){
+					map.touches(e);
+					if (map.touched && map.touched.length > 0) {
+						target = map.touched[0];
+					}
+				}
+			}
+			/*if(!map.moved){
+				map.touches(e);
+				if (map.touched && map.touched.length > 0) {
+					target = map.touched[0];
+				}
+			}*/
+		}
+		
+		/**
+		 * Событие нажатия кнопки мыши
+		 * @param	e	объект события
+		 */
+		private function onMouseDown(e:MouseEvent):void {
+			
+			deltaX = e.stageX;
+			deltaY = e.stageY;
+			
+			moveCounter = 0;
+			
+			if (map.moved != null) {
+				map.moved.move = false;
+				map.moved = null;
+			}else if (map.touched.length > 0) {
+				map.touch();
+			}
+		}
+		
+		/**
+		 * Событие отпускания кнопки мыши
+		 * @param	e	объект события
+		 */
+		private function onMouseUp(e:MouseEvent):void {
+			
+			if (map.moved != null) {
+				map.moved.move = false;
+				map.moved = null;
+			}
+		}
+		
+		public function onDeleteButtonClick(event:Event):void
+		{
+			if(event.currentTarget.label == "Включить удаление") {event.currentTarget.label = "Отключить удаление"; 	Map.deleteMode = true;}
+			else   												 {event.currentTarget.label = "Включить удаление";	 	Map.deleteMode = false;}
+		}
+		
+		public function saveUnits():void
+		{
+			var units:Array = [];
+			for(var i:int = 0; i<Map.units.length; i++)
+			{
+				units.push(Map.units[i].info);
+			}	
+		}
+		
+		private function onGridBttnClick(e:Event):void
+		{
+			Map.self.plane.visible = !Map.self.plane.visible;
+		}	
+		
+		private function changeGrid(value:String):void
+		{
+			switch(value)
+			{
+				case "b":
+					Map.self.buildingsLayer.visible = !Map.self.buildingsLayer.visible 
+				break;
+				case "p":
+					Map.self.personagesLayer.visible = !Map.self.personagesLayer.visible 
+				break;
+			}	
+		}
+		
+		private function changeZoneMarker(event:Event):void
+		{
+			Zones.changeZoneMarker(Number(event.currentTarget.selectedIndex) + 1);
+		}
+		
+	    ]]>
+    </fx:Script>
+	
+	<mx:Panel title="Генератор карты" height="100%" width="100%" paddingTop="10" paddingLeft="10" paddingRight="10" paddingBottom="10">
+				<mx:VBox width="100%" height="100%">
+					<mx:VBox width="100%" height="90%">
+						<mx:HBox width="100%" height="100%">
+							<mx:Panel title="Карта" height="100%" width="100%" paddingTop="5" paddingLeft="5" paddingRight="5" paddingBottom="5">
+									<mx:UIComponent id="holder" width="100%" height="100%" />
+							</mx:Panel>
+							<mx:VBox width="200" height="100%">
+								<mx:Panel title="Маркеры" height="100" width="100%" paddingTop="5" paddingLeft="5" paddingRight="5" paddingBottom="5">
+									<s:CheckBox id="gridForBuild" label="для зданий" click="changeGrid('b')"  selected = "true"/>
+									<s:CheckBox id="gridForPers" label="для персонажей" click="changeGrid('p')" selected = "true"/>
+								</mx:Panel>
+								<mx:Panel title="Кисть" height="80" width="100%" paddingTop="5" paddingLeft="5" paddingRight="5" paddingBottom="5">
+									<mx:NumericStepper id="Brush" change="Zones.changeBrush(event);" minimum="1" maximum="30" stepSize="1" value="10" width="60"/>
+								</mx:Panel>
+								<mx:Panel title="Зоны" height="200" width="100%" paddingTop="5" paddingLeft="5" paddingRight="5" paddingBottom="5">
+									<s:HGroup>
+										<s:CheckBox id="zonesOnBttn" label="Зоны" click="Zones.showZones();" selected = "true"/>
+									</s:HGroup>
+									<s:ButtonBar id="btnBar" change="changeZoneMarker(event)" selectedIndex = "0" horizontalCenter="0" verticalCenter="0">
+										<s:layout>
+											<s:VerticalLayout gap="-1" />
+										</s:layout>
+										<s:dataProvider>
+											<s:ArrayList source="[1,2,3,4]"/>
+										</s:dataProvider>
+									</s:ButtonBar>
+								</mx:Panel>
+								
+								<mx:Panel title="Операции" height="300" width="100%" paddingTop="5" paddingLeft="5" paddingRight="5" paddingBottom="5">
+									<mx:Label text="Название карты:" />
+									<mx:TextInput id="mapName" text="" width="100%"/>
+									<s:HGroup>
+										<mx:Label text="ID:" />
+										<mx:TextInput id="mapID" text="0" width="100%"/>
+									</s:HGroup>
+									<mx:Button id="saveGridBttn" label="Сохранить сетку" width="100%" click="Save.saveMarkersData();"/>
+									
+									<mx:Button id="objectPath" label="Директория для SWF"  width="100%" click="Save.pathHandler(event);" />
+									<mx:TextInput id="path" text="" width="100%" editable="true" />
+									<mx:Button id="projPath" label="Директория проекта"  width="100%" click="Save.projectHandler(event);" />
+									<mx:TextInput id="pathProj" text="" width="100%" editable="true" />
+									<mx:Button id="saveMapBttn" label="Сгенерировать карту" width="100%" click="Save.generateProject();"/>
+								</mx:Panel>
+							</mx:VBox>
+						</mx:HBox>
+					</mx:VBox>
+					<mx:VBox width="100%" height="10%">
+							<mx:HorizontalList id="ElementsList" height="100%" width="100%" color="0x323232" columnWidth="100"  dataProvider="{imageFiles}" click="handleClick(event)" />
+							<mx:HBox width="100%" height="100%">
+								<mx:Label id="labelZ" text="Z:" />
+								<mx:NumericStepper id="TZ" change="handleChangeZ(event);" minimum="0" maximum="250" stepSize="10" value="10" width="60"/>
+								<mx:Label id="labelX" text="X:"/>
+								<mx:NumericStepper id="TX" change="handleChangeX(event);" minimum="0" maximum="250" stepSize="10" value="10" width="60"/>
+								<mx:Button id="deleteButton" color="0x323232" label="Включить удаление" click="onDeleteButtonClick(event)"/>
+								<s:HSlider id="hSlider" minimum="0" maximum="1" value="1" stepSize="0.1" snapInterval="0.1" liveDragging="true" change="unitResize(hSlider.value)"/>
+								<s:HGroup>
+									<mx:Text text="Уровень:"/>
+									<mx:Button id="upButton" label="Выше" click="onUpBttnClick(event)"/>
+									<mx:Button id="dnButton" label="Ниже" click="onDnBttnClick(event)"/>
+								</s:HGroup>
+								
+							</mx:HBox>
+							<s:HGroup>
+								<s:Button id="gridBttn" label="Сетка"  width="100" click="onGridBttnClick(event)" />
+								<s:Button id="zonesBttn" label="Добавить тайлы"  width="150" click="Zones.onZoneBttnClick(event); zonesBttn.visible = false;" />
+								<mx:Label id="zonesDraw" text="" />
+							</s:HGroup>
+					</mx:VBox>
+				</mx:VBox>
+	</mx:Panel>
+	
+</s:WindowedApplication>
