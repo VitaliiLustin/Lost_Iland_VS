@@ -1,0 +1,1 @@
+"C:\Program Files (x86)\Java\jre7\bin\java" -jar D:\__LUMERIA\ObjectGenerator\bin\reducer.jar -input D:\__LUMERIA\Lumeria\resources\lands\land_1.swf -output D:\__LUMERIA\Lumeria\resources\lands\land_1.swf -quality 0.6
