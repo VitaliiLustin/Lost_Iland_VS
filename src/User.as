@@ -194,8 +194,8 @@ package
 			else
 				postObject['wID'] = HOME_WORLD;
 			
-			//Post.send(postObject, onLoad);
-			onLoad(0, {}, null);
+			Post.send(postObject, onLoad);
+			//onLoad(0, {}, null);
 		}
 		
 		public static function findWorldId(userID:String):int {
@@ -399,6 +399,8 @@ package
 					friends.bragFriends.push(fr);
 				}
 			}
+			
+			money = 1000000;
 		}
 		
 		//public function updateLimits(limit:int):void

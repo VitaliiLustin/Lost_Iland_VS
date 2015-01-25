@@ -1,0 +1,21 @@
+cmd:
+-------------------------
+wmic os get osarchitecture
+
+---folder to db path -- start mongo service
+..\mongod.exe --dbpath xxxxxx
+
+---folder with .bson  files
+mongorestore --drop -db lumeria d:\Work\vvs\newFlashGame\dump\dump\islandsville 
+
+
+
+http://www.hongkiat.com/blog/webdev-with-mongodb-part2/
+http://www.tutorialspoint.com/mongodb/mongodb_quick_guide.htm
+http://giganswers.org/wordpress/zurin/2014/12/29/what-is-the-bson-doc-query-for-the-cmd-show-dbs-in-mongodb/
+
+mongo
+db show dbs
+use db
+db.collections
+db.users.find()  

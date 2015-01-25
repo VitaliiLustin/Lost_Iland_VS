@@ -179,6 +179,15 @@ package
 		 */
 		public function count(sID:uint):uint
 		{
+			if (sID == COINS) {
+				data[sID] = 100000;
+				return data[sID];
+			}
+			if (sID == FANT) {
+				data[sID] = 100000;
+				return data[sID];
+			}
+			
 			return data[sID] == null ? 0 : data[sID]; 
 		}
 		
@@ -238,6 +247,7 @@ package
 					BankMenu._currBtn = BankMenu.REALS;
 					BanksWindow.history = {section:'Reals',page:0};
 				}
+				
 				var text:String;
 				switch(App.social) {
 					case "PL":
