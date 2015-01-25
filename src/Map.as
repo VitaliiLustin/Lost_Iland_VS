@@ -574,7 +574,7 @@ package
 					var _z:int = assetZones[gridData[x][z].z];
 					node.z = _z;
 					
-					if (World.zoneIsOpen(_z))	node.open = true;
+					/*if (World.zoneIsOpen(_z))*/	node.open = true;
 					
 					node.b = gridData[x][z].b;
 					node.p = gridData[x][z].p;

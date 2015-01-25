@@ -173,7 +173,18 @@ package
 		private static var font:Class;
 		
 		public static const VERSION:String = '04.09.2';
-		
+		//foreach($data as $k=>$item){
+			//if(isset($data[$k]['uid']))
+				//unset($data[$k]['uid']);
+			//if(isset($data[$k]['first_name']))
+				//unset($data[$k]['first_name']);
+			//if(isset($data[$k]['last_name']))
+				//unset($data[$k]['last_name']);
+			//if(isset($data[$k]['photo']))
+				//unset($data[$k]['photo']);
+		//}	
+		//
+		//
 		public static const ID:* = '159185922';		// 159185922     22606358    100002550903626   5800812  2329711  2322590  9490649  134475609  575960593169  2914315
 		public static const SOCIAL:* = 'DM';		// DM, VK, OK, ML, FB, PL
 		public static const SERVER:* = 'DM';		// DM, VK, OK, ML, FB, PL
