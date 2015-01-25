@@ -73,6 +73,15 @@ package
 			this.data = data;
 			energyRestoreSettings = App.data.options['EnergyRestoreTime'];
 			checkValue();
+			
+			emulateData();
+		}
+		
+		private function emulateData():void 
+		{
+			data[COINS] = 100000;
+			data[FANT] = 100000;
+			data[FANTASY] = 100000;
 		}
 		
 		public static function set efirLimit(value:int):void {
@@ -179,15 +188,6 @@ package
 		 */
 		public function count(sID:uint):uint
 		{
-			if (sID == COINS) {
-				data[sID] = 100000;
-				return data[sID];
-			}
-			if (sID == FANT) {
-				data[sID] = 100000;
-				return data[sID];
-			}
-			
 			return data[sID] == null ? 0 : data[sID]; 
 		}
 		

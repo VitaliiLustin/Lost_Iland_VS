@@ -1051,9 +1051,10 @@ package
 						ShopWindow.currentBuyObject.type = null;
 					}
 					//if (!(unit is Lantern) && !(unit is BonusItem)) {
-					if (!(unit is Boss) && !(unit is BonusItem)) {
-						if (!world.checkZone(null, true)) return;
-					}
+					
+					//if (!(unit is Boss) && !(unit is BonusItem)) { //TODO вернуть, убрал пока карта не сделана нормально
+						//if (!world.checkZone(null, true)) return;
+					//}
 					
 					unit.click();
 					if(!(unit is Animal))
